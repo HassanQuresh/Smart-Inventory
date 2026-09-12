@@ -1,28 +1,34 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import Product from "../models/Product";
-export async function createProduct(req: Request, res: Response): Promise<Response | void>  {
+export async function createProduct(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<Response | void> {
   try {
     const product = await Product.create(req.body);
     return res.status(201).json(product);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: "Failed to create product",
-    });
-  };
-};
-export async function getProducts(req: Request, res: Response): Promise<Response | void>  {
+    next(error);
+  }
+}
+export async function getProducts(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<Response | void> {
   try {
     const products = await Product.find();
     return res.status(200).json(products);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: "Failed to retrieve products",
-    });
+    next(error);
   }
 }
-export async function getProduct(req: Request, res: Response): Promise<Response | void>  {
+export async function getProduct(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<Response | void> {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) {
@@ -32,24 +38,15 @@ export async function getProduct(req: Request, res: Response): Promise<Response 
     }
     return res.status(200).json(product);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: "Failed to retrieve product",
-    });
+    next(error);
   }
 }
-export async function replaceProduct(req: Request, res: Response): Promise<Response | void>  {
+export async function replaceProduct(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<Response | void> {
   try {
-    if (
-      !req.body.name ||
-      !req.body.price ||
-      req.body.stock === undefined ||
-      !req.body.category
-    ) {
-      return res.status(400).json({
-        message: "Incomplete information",
-      });
-    }
     const replacedProduct = await Product.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -62,19 +59,15 @@ export async function replaceProduct(req: Request, res: Response): Promise<Respo
     }
     return res.status(200).json(replacedProduct);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: "Replacement failed",
-    });
+    next(error);
   }
 }
-export async function updateProduct(req: Request, res: Response): Promise<Response | void>  {
+export async function updateProduct(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<Response | void> {
   try {
-    if (Object.keys(req.body).length === 0) {
-      return res.status(400).json({
-        message: "No update data provided",
-      });
-    }
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
       { $set: req.body },
@@ -87,13 +80,14 @@ export async function updateProduct(req: Request, res: Response): Promise<Respon
     }
     return res.status(200).json(updatedProduct);
   } catch (error) {
-    console.error("Error updating product", error);
-    return res.status(500).json({
-      message: "Update failed",
-    });
+    next(error);
   }
 }
-export async function deleteProduct(req: Request, res: Response): Promise<Response | void> {
+export async function deleteProduct(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<Response | void> {
   try {
     const deletedProduct = await Product.findByIdAndDelete(req.params.id);
     if (!deletedProduct) {
@@ -106,9 +100,38 @@ export async function deleteProduct(req: Request, res: Response): Promise<Respon
       id: req.params.id,
     });
   } catch (error) {
-    console.error("Error deleting product", error);
-    return res.status(500).json({
-      message: "Delete failed",
-    });
+    next(error);
+  }
+}
+export async function updateStock(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<Response | void> {
+  try {
+    const { id } = req.params;
+    const { change } = req.body;
+    const updatedProduct = await Product.findOneAndUpdate(
+      {
+        _id: id,
+        ...(change < 0 ? { stock: { $gte: Math.abs(change) } } : {}),
+      },
+      {
+        $inc: { stock: change },
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+    if (!updatedProduct) {
+      res.status(404).json({
+        message: "Product not found or insufficient stock",
+      });
+      return;
+    }
+    res.status(200).json(updatedProduct);
+  } catch (error) {
+    next(error);
   }
 }

@@ -5,6 +5,14 @@ export function validateCompleteProduct(
   next: NextFunction,
 ) {
   const { name, price, stock, category } = req.body;
+  const allowedFields = ["name", "price", "stock", "category"];
+  const objectKeys = Object.keys(req.body);
+  const isValid = objectKeys.every(key => allowedFields.includes(key));
+  if(!isValid){
+    return res.status(400).json({
+      message: "Invalid fields in the request body."
+    });
+  };
   if (
     name === undefined ||
     price === undefined ||
@@ -55,6 +63,14 @@ export function validatePartialProduct(
   next: NextFunction,
 ) {
   const { name, price, stock, category } = req.body;
+  const allowedFields = ["name", "price", "stock", "category"];
+  const objectKeys = Object.keys(req.body);
+  const isValid = objectKeys.every(key => allowedFields.includes(key));
+  if(!isValid){
+    return res.status(400).json({
+      message: "Invalid fields in the request body."
+    });
+  };
   if (
     name === undefined &&
     price === undefined &&
@@ -68,7 +84,8 @@ export function validatePartialProduct(
   }
   if (
     name !== undefined &&
-    (name.trim() !== name ||
+    (typeof name !== "string" ||
+      name.trim() !== name ||
       name.length < 3 ||
       name.length > 100 ||
       !/^[A-Za-z \-]+$/.test(name))
@@ -93,7 +110,7 @@ export function validatePartialProduct(
     (typeof stock !== "number" || !Number.isInteger(stock) || stock < 0)
   ) {
     res.status(400).json({
-      message: "Stock must a non-negative integer",
+      message: "Stock must be a non-negative integer",
     });
     return;
   }
@@ -107,4 +124,32 @@ export function validatePartialProduct(
     return;
   }
   next();
-};
+}
+export function validateUpdateStock(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const { change } = req.body;
+  const allowedFields = ["change"];
+  const objectKey = Object.keys(req.body);
+  const isValid = objectKey.every(key => allowedFields.includes(key));
+  if(!isValid){
+    return res.status(400).json({
+      message: "Invalid fields in the request body"
+    });
+  };
+  if (change === undefined) {
+    res.status(400).json({
+      message: "Change is required",
+    });
+    return;
+  }
+  if (typeof change !== "number" || !Number.isInteger(change)) {
+    res.status(400).json({
+      message: "Change must be an integer",
+    });
+    return;
+  }
+  next();
+}
