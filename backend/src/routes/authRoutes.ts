@@ -1,0 +1,10 @@
+import express from "express";
+import { registerUser, loginUser, logoutUser, getCurrentUser } from "../controllers/authController";
+import { protect } from "../middleware/authMiddleware";
+import { validateAuthCredentials } from "../middleware/authValidation";
+const router = express.Router();
+router.post("/register", validateAuthCredentials, registerUser);
+router.post("/login", validateAuthCredentials, loginUser);
+router.post("/logout", logoutUser);
+router.get("/me", protect, getCurrentUser);
+export default router;

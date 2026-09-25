@@ -8,9 +8,14 @@ export function errorHandler(
   _next: NextFunction,
 ): Response {
   console.error("Application Error:", err);
+  if(err.code === 11000){
+    return res.status(409).json({
+      message: "Resource already exists",
+    });
+  };
   if (err instanceof mongoose.Error.CastError) {
     return res.status(400).json({
-      message: "Invalid product ID",
+      message: "Invalid ID",
     });
   }
   if (err instanceof mongoose.Error.ValidationError) {

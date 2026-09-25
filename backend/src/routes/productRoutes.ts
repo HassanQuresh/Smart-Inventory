@@ -11,14 +11,39 @@ import {
 import {
   validateCompleteProduct,
   validatePartialProduct,
-  validateUpdateStock
+  validateUpdateStock,
 } from "../middleware/productValidation";
+import { protect, authorize } from "../middleware/authMiddleware";
 const router = express.Router();
-router.get("/", getProducts);
-router.get("/:id", getProduct);
-router.post("/", validateCompleteProduct, createProduct);
-router.put("/:id", validateCompleteProduct, replaceProduct);
-router.patch("/:id", validatePartialProduct, updateProduct);
-router.patch("/:id/stock", validateUpdateStock, updateStock);
-router.delete("/:id", deleteProduct);
+router.get("/", protect, authorize(["Manager", "Employee"]), getProducts);
+router.get("/:id", protect, authorize(["Manager", "Employee"]), getProduct);
+router.post(
+  "/",
+  protect,
+  authorize(["Manager"]),
+  validateCompleteProduct,
+  createProduct,
+);
+router.put(
+  "/:id",
+  protect,
+  authorize(["Manager"]),
+  validateCompleteProduct,
+  replaceProduct,
+);
+router.patch(
+  "/:id",
+  protect,
+  authorize(["Manager"]),
+  validatePartialProduct,
+  updateProduct,
+);
+router.patch(
+  "/:id/stock",
+  protect,
+  authorize(["Manager", "Employee"]),
+  validateUpdateStock,
+  updateStock,
+);
+router.delete("/:id", protect, authorize(["Manager"]), deleteProduct);
 export default router;

@@ -29,7 +29,7 @@ const productSchema = new mongoose.Schema(
         validator: function (value){
           return value.length > 0
         }, 
-        message: "Category can not be empty or just spaces"
+        message: "Category cannot be empty or just spaces"
       }
     },
   },
