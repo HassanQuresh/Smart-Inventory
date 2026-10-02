@@ -11,17 +11,17 @@ export default function Register() {
   const [message, setMessage] = useState("");
   function updateUsername(event) {
     setUsername(event.target.value);
-  }
+  };
   function updatePassword(event) {
     setPassword(event.target.value);
-  }
+  };
   async function handleSubmit(event) {
     event.preventDefault();
     setMessage("");
     if (password.length < 8) {
       setError("Password must be 8 characters long.");
       return;
-    }
+    };
     setError("");
     setIsSubmitting(true);
     try {
@@ -44,13 +44,13 @@ export default function Register() {
         setMessage(
           `Unexpected error occurred (Status: ${registeredUser.status})`,
         );
-      }
+      };
     } catch (error) {
       console.error(error);
       setIsSubmitting(false);
       setMessage("Unable to connect to the server. Please try again.");
-    }
-  }
+    };
+  };
   return (
     <>
       <form onSubmit={handleSubmit}>
@@ -79,6 +79,6 @@ export default function Register() {
       <h3>{message}</h3>
     </>
   );
-}
+};
 //     Username: testmanager42
 // Password: InventoryTest123!
