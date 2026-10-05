@@ -56,3 +56,31 @@ export async function getCurrentUser() {
     data,
   };
 }
+export async function getProducts() {
+  const response = await fetch(`${API_URL}/products`, {
+    method: "GET",
+    credentials: "include",
+  });
+  const data = await response.json();
+  return {
+    status: response.status,
+    data,
+  };
+}
+export async function updateStock(productId, change) {
+  const response = await fetch(`${API_URL}/products/${productId}/stock`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      change,
+    }),
+  });
+  const data = await response.json();
+  return {
+    status: response.status,
+    data,
+  };
+}
