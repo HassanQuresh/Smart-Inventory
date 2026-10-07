@@ -67,6 +67,19 @@ export async function getProducts() {
     data,
   };
 }
+export async function getProduct(productId) {
+  const response = await fetch(`${API_URL}/products/${productId}`, {
+    method: "GET",
+    credentials: "include",
+  });
+
+  const data = await response.json();
+
+  return {
+    status: response.status,
+    data,
+  };
+}
 export async function updateStock(productId, change) {
   const response = await fetch(`${API_URL}/products/${productId}/stock`, {
     method: "PATCH",
@@ -84,3 +97,44 @@ export async function updateStock(productId, change) {
     data,
   };
 }
+export async function createProduct(productData) {
+  const response = await fetch(`${API_URL}/products`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(productData),
+  });
+  const data = await response.json();
+  return {
+    status: response.status,
+    data
+  };
+};
+export async function updateProduct(productId, productData) {
+  const response = await fetch(`${API_URL}/products/${productId}`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(productData),
+  });
+  const data = await response.json();
+  return {
+    status: response.status,
+    data
+  }
+};
+export async function deleteProduct(productId) {
+  const response = await fetch(`${API_URL}/products/${productId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  const data = await response.json();
+  return {
+    status: response.status,
+    data
+  };
+};

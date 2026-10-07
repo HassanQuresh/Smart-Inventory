@@ -80,5 +80,3 @@ export default function Register() {
     </>
   );
 };
-//     Username: testmanager42
-// Password: InventoryTest123!
