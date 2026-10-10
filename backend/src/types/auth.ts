@@ -9,9 +9,31 @@ export const jwtPayloadSchema = z.object({
 
 export type JwtPayload = z.infer<typeof jwtPayloadSchema>;
 
-export const authCredentialsSchema = z.object({
-  username: z.string().trim().min(1, "Username is required"),
-  password: z.string().min(8, "Password must be at least 8 charactersd")
-}).strict();
+export const registerSchema = z
+  .object({
+    username: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .min(3, "Username must be at least 3 characters")
+      .max(30, "Username must be at most 30 characters")
+      .regex(
+        /^[a-z0-9_]+$/,
+        "Username can only contain letters, numbers and underscores",
+      ),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .refine(
+        (value) => Buffer.byteLength(value, "utf8") <= 72,
+        "Password is too long (maximum 72 characters)",
+      ),
+  })
+  .strict();
 
-export type UserProfile = z.infer<typeof authCredentialsSchema>;
+export const loginSchema = z
+  .object({
+    username: z.string().trim().toLowerCase().min(1, "Username is required"),
+    password: z.string().min(1, "Password is required"),
+  })
+  .strict();

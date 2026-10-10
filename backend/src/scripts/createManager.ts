@@ -1,23 +1,43 @@
-import dns from "node:dns";
-
-dns.setServers(["8.8.8.8"]);
-import "dotenv/config.js";
+import "dotenv/config";
 import bcrypt from "bcrypt";
-import mongoose from "mongoose";
 import User from "../models/User";
-import { connectDB } from "../config/db";
+import { connectDB, disconnectDB } from "../config/db";
+import { registerSchema } from "../types/auth";
+
 async function createManager() {
-  await connectDB();
-  const username = "manager";
-  const password = "YOUR_PASSWORD_HERE";
-  const passwordHash = await bcrypt.hash(password, 12);
-  const manager = new User({
-    username,
-    passwordHash,
-    role: "Manager",
+  const parsed = registerSchema.safeParse({
+    username: process.env.MANAGER_USERNAME,
+    password: process.env.MANAGER_PASSWORD,
   });
-  await manager.save();
-  console.log("Manager created successfully!");
-  await mongoose.connection.close();
+
+  if (!parsed.success) {
+    throw new Error(
+      `${parsed.error.issues.map((issue) => issue.message).join(". ")} ` +
+        "(set MANAGER_USERNAME and MANAGER_PASSWORD in your .env file)",
+    );
+  }
+
+  const { username, password } = parsed.data;
+
+  await connectDB();
+
+  const existing = await User.findOne({ username });
+  if (existing) {
+    throw new Error(`User "${username}" already exists.`);
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+  await User.create({ username, passwordHash, role: "Manager" });
+
+  console.log(`Manager "${username}" created successfully!`);
 }
-createManager();
+
+createManager()
+  .catch((error) => {
+    console.error(
+      "Failed to create manager:",
+      error instanceof Error ? error.message : error,
+    );
+    process.exitCode = 1;
+  })
+  .finally(() => disconnectDB());

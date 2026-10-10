@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { z } from 'zod';
 import { jwtPayloadSchema } from "../types/auth";
 export function authorize(allowedRoles: ("Manager" | "Employee")[]) {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -17,32 +16,22 @@ export function authorize(allowedRoles: ("Manager" | "Employee")[]) {
     next();
   };
 }
-
 export function protect(req: Request, res: Response, next: NextFunction) {
-  const envResult = z.string().min(1).safeParse(process.env.JWT_SECRET);
-  
-  if (!envResult.success) {
-    throw new Error("JWT_SECRET environment variable is missing or empty");
-  }
-  const JWT_SECRET = envResult.data;
   const token = req.cookies?.token;
   if (!token) {
     res.status(401).json({ message: "Not authorized, no token provided" });
-    return; 
+    return;
   }
-
   try {
-    const rawDecoded = jwt.verify(token, JWT_SECRET);
+    const rawDecoded = jwt.verify(token, process.env.JWT_SECRET as string, {
+      algorithms: ["HS256"],
+    });
     const payloadResult = jwtPayloadSchema.safeParse(rawDecoded);
-
     if (!payloadResult.success) {
-       res.status(401).json({ 
-        message: "Invalid token"
-      });
+      res.status(401).json({ message: "Invalid token" });
       return;
     }
-    req.user = payloadResult.data; 
-
+    req.user = payloadResult.data;
     next();
   } catch {
     res.status(401).json({ message: "Invalid or expired token" });

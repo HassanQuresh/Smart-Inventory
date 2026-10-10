@@ -2,6 +2,13 @@ import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User";
+const isProduction = process.env.NODE_ENV === "production";
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? ("none" as const) : ("lax" as const),
+};
+const DUMMY_HASH = bcrypt.hashSync("not-a-real-password", 12);
 export async function registerUser(
   req: Request,
   res: Response,
@@ -35,68 +42,46 @@ export async function loginUser(
   try {
     const { username, password } = req.body;
     const user = await User.findOne({ username });
-    if (!user) {
-      res.status(401).json({
-        message: "Invalid Credentials",
-      });
+    const isMatch = await bcrypt.compare(
+      password,
+      user?.passwordHash ?? DUMMY_HASH,
+    );
+    if (!user || !isMatch) {
+      res.status(401).json({ message: "Invalid Credentials" });
       return;
-    }
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!isMatch) {
-      res.status(401).json({
-        message: "Invalid Credentials",
-      });
-      return;
-    }
-    const JWT_SECRET = process.env.JWT_SECRET;
-    if (!JWT_SECRET) {
-      throw new Error(
-        "JWT_SECRET environment variable is missing from your .env configuration.",
-      );
     }
     const token = jwt.sign(
-      {
-        id: user._id,
-        role: user.role,
-      },
-      JWT_SECRET,
-      {
-        expiresIn: "1d",
-      },
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET as string,
+      { expiresIn: "1d" },
     );
     res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      ...cookieOptions,
       maxAge: 24 * 60 * 60 * 1000,
     });
-    res.status(200).json({
-      message: "Logged in successfully!",
-    });
+    res.status(200).json({ message: "Logged in successfully!" });
   } catch (error) {
     next(error);
   }
 }
+
 export async function logoutUser(
   _req: Request,
   res: Response,
   next: NextFunction,
 ) {
   try {
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-    });
-
-    res.status(200).json({
-      message: "Logged out successfully!",
-    });
+    res.clearCookie("token", cookieOptions);
+    res.status(200).json({ message: "Logged out successfully!" });
   } catch (error) {
     next(error);
   }
 }
-export async function getCurrentUser(req: Request, res: Response, next: NextFunction) {
+export async function getCurrentUser(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
   try {
     const user = await User.findById(req.user.id).select("username role");
     if (!user) {
@@ -112,4 +97,4 @@ export async function getCurrentUser(req: Request, res: Response, next: NextFunc
   } catch (error) {
     next(error);
   }
-};
+}

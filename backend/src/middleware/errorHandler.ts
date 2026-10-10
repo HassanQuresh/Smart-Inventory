@@ -8,11 +8,17 @@ export function errorHandler(
   _next: NextFunction,
 ): Response {
   console.error("Application Error:", err);
-  if(err.code === 11000){
+  if (err.type === "entity.parse.failed") {
+    return res.status(400).json({ message: "Invalid JSON in request body" });
+  }
+  if (err.type === "entity.too.large") {
+    return res.status(413).json({ message: "Request body too large" });
+  }
+  if (err.code === 11000) {
     return res.status(409).json({
       message: "Resource already exists",
     });
-  };
+  }
   if (err instanceof mongoose.Error.CastError) {
     return res.status(400).json({
       message: "Invalid ID",

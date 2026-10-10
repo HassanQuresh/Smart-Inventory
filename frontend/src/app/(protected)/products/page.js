@@ -9,26 +9,20 @@ export default function Products() {
   const [errors, setErrors] = useState({});
   const [updating, setUpdating] = useState({});
   const [deleting, setDeleting] = useState({});
-  const { user, isLoading } = useContext(AuthContext);
+  const { user, setUser } = useContext(AuthContext);
   const [inputValue, setInputValue] = useState("");
   const [pageError, setPageError] = useState("");
   const router = useRouter();
   useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/login");
-    }
-  }, [user, isLoading, router]);
-  useEffect(() => {
     let ignore = false;
     async function fetchProducts() {
-      if (isLoading || !user) return;
       try {
         const result = await getProducts();
         if (ignore) return;
         if (result.status === 200) {
           setProducts(result.data);
         } else if (result.status === 401) {
-          router.push("/login");
+          setUser(null);
         } else {
           setPageError(result.data?.message || "Failed to load products.");
         }
@@ -41,7 +35,7 @@ export default function Products() {
     return () => {
       ignore = true;
     };
-  }, [user, isLoading, router]);
+  }, [setUser]);
   function handleChange(productId, value) {
     setChanges((previousChanges) => ({
       ...previousChanges,
@@ -145,12 +139,6 @@ export default function Products() {
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(inputValue.toLowerCase())
   );
-  if (isLoading) {
-    return <h1>Loading...</h1>;
-  }
-  if (!user) {
-    return <h1>You are not logged in.</h1>;
-  }
   return (
     <>
       <h1>Products Page</h1>
@@ -194,6 +182,8 @@ export default function Products() {
             )}
           </div>
         ))
+      ) : products.length === 0 ? (
+        <p>No products available.</p>
       ) : (
         <p>No products match your search.</p>
       )}

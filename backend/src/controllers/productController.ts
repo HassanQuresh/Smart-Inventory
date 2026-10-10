@@ -47,10 +47,10 @@ export async function replaceProduct(
   next: NextFunction,
 ): Promise<Response | void> {
   try {
-    const replacedProduct = await Product.findByIdAndUpdate(
-      req.params.id,
+    const replacedProduct = await Product.findOneAndReplace(
+      { _id: req.params.id },
       req.body,
-      { new: true, overwrite: true, runValidators: true },
+      { new: true, runValidators: true },
     );
     if (!replacedProduct) {
       return res.status(404).json({
@@ -125,10 +125,11 @@ export async function updateStock(
       },
     );
     if (!updatedProduct) {
-      res.status(404).json({
-        message: "Product not found or insufficient stock",
-      });
-      return;
+      const exists = await Product.exists({ _id: id });
+      if (!exists) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      return res.status(409).json({ message: "Insufficient stock" });
     }
     res.status(200).json(updatedProduct);
   } catch (error) {

@@ -1,140 +1,61 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-export async function registerUser(username, password) {
-  const response = await fetch(`${API_URL}/auth/register`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      username,
-      password,
-    }),
-  });
-  const data = await response.json();
-  return {
-    status: response.status,
-    data,
-  };
-}
-export async function loginUser(username, password) {
-  const response = await fetch(`${API_URL}/auth/login`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      username,
-      password,
-    }),
-  });
-  const data = await response.json();
-  return {
-    status: response.status,
-    data,
-  };
-}
-export async function logoutUser() {
-  const response = await fetch(`${API_URL}/auth/logout`, {
-    method: "POST",
-    credentials: "include",
-  });
-  const data = await response.json();
-  return {
-    status: response.status,
-    data,
-  };
-}
-export async function getCurrentUser() {
-  const response = await fetch(`${API_URL}/auth/me`, {
-    method: "GET",
-    credentials: "include",
-  });
-  const data = await response.json();
-  return {
-    status: response.status,
-    data,
-  };
-}
-export async function getProducts() {
-  const response = await fetch(`${API_URL}/products`, {
-    method: "GET",
-    credentials: "include",
-  });
-  const data = await response.json();
-  return {
-    status: response.status,
-    data,
-  };
-}
-export async function getProduct(productId) {
-  const response = await fetch(`${API_URL}/products/${productId}`, {
-    method: "GET",
-    credentials: "include",
-  });
 
-  const data = await response.json();
+async function request(path, { method = "GET", body } = {}) {
+  const options = {
+    method,
+    credentials: "include",
+  };
 
-  return {
-    status: response.status,
-    data,
-  };
-}
-export async function updateStock(productId, change) {
-  const response = await fetch(`${API_URL}/products/${productId}/stock`, {
-    method: "PATCH",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      change,
-    }),
-  });
-  const data = await response.json();
-  return {
-    status: response.status,
-    data,
-  };
-}
-export async function createProduct(productData) {
-  const response = await fetch(`${API_URL}/products`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(productData),
-  });
-  const data = await response.json();
-  return {
-    status: response.status,
-    data
-  };
-};
-export async function updateProduct(productId, productData) {
-  const response = await fetch(`${API_URL}/products/${productId}`, {
-    method: "PATCH",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(productData),
-  });
-  const data = await response.json();
-  return {
-    status: response.status,
-    data
+  if (body !== undefined) {
+    options.headers = { "Content-Type": "application/json" };
+    options.body = JSON.stringify(body);
   }
-};
-export async function deleteProduct(productId) {
-  const response = await fetch(`${API_URL}/products/${productId}`, {
-    method: "DELETE",
-    credentials: "include",
+
+  try {
+    const response = await fetch(`${API_URL}${path}`, options);
+
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      data = { message: `Unexpected server response (${response.status})` };
+    }
+
+    return { status: response.status, data };
+  } catch (error) {
+    console.error(error);
+    return {
+      status: 0,
+      data: { message: "Unable to reach the server. Please try again." },
+    };
+  }
+}
+
+export const registerUser = (username, password) =>
+  request("/auth/register", { method: "POST", body: { username, password } });
+
+export const loginUser = (username, password) =>
+  request("/auth/login", { method: "POST", body: { username, password } });
+
+export const logoutUser = () => request("/auth/logout", { method: "POST" });
+
+export const getCurrentUser = () => request("/auth/me");
+
+export const getProducts = () => request("/products");
+
+export const getProduct = (productId) => request(`/products/${productId}`);
+
+export const createProduct = (productData) =>
+  request("/products", { method: "POST", body: productData });
+
+export const updateProduct = (productId, productData) =>
+  request(`/products/${productId}`, { method: "PATCH", body: productData });
+
+export const updateStock = (productId, change) =>
+  request(`/products/${productId}/stock`, {
+    method: "PATCH",
+    body: { change },
   });
-  const data = await response.json();
-  return {
-    status: response.status,
-    data
-  };
-};
+
+export const deleteProduct = (productId) =>
+  request(`/products/${productId}`, { method: "DELETE" });

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { registerUser } from "@/lib/api";
+import Link from "next/link";
 export default function Register() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -19,7 +20,7 @@ export default function Register() {
     event.preventDefault();
     setMessage("");
     if (password.length < 8) {
-      setError("Password must be 8 characters long.");
+      setError("Password must be at least 8 characters.");
       return;
     };
     setError("");
@@ -42,9 +43,10 @@ export default function Register() {
       } else {
         setIsSubmitting(false);
         setMessage(
-          `Unexpected error occurred (Status: ${registeredUser.status})`,
+          registeredUser.data?.message ||
+          `Unexpected error occurred (Status: ${registeredUser.status})`
         );
-      };
+      }
     } catch (error) {
       console.error(error);
       setIsSubmitting(false);
@@ -55,6 +57,7 @@ export default function Register() {
     <>
       <form onSubmit={handleSubmit}>
         <h2>Account Registration</h2>
+        <Link href="/login">Already have an account? Login</Link>
         <label htmlFor="username">Username</label>
         <input
           type="text"

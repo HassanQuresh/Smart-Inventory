@@ -1,20 +1,32 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { AuthContext } from "@/context/AuthContext";
+
 export default function Home() {
-  const [message, setMessage] = useState("Connecting to backend...");
+  const { user, isLoading } = useContext(AuthContext);
+  const router = useRouter();
+
   useEffect(() => {
-    async function getBackendMessage(){
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/`);
-      const data = await response.text();
-      setMessage(data);
-    };
-    getBackendMessage();
-  }, []);
+    if (!isLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [isLoading, user, router]);
+
+  if (isLoading || user) {
+    return <h1>Loading...</h1>;
+  }
 
   return (
     <main>
       <h1>Smart Inventory</h1>
-      <p>{message}</p>
+      <p>
+        Track products, stock levels and inventory value, with separate
+        permissions for managers and employees.
+      </p>
+      <Link href="/login">Login</Link>
+      <Link href="/register">Register</Link>
     </main>
   );
 }

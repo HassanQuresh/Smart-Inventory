@@ -4,6 +4,7 @@ const productSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
+      trim: true,
       minlength: 3,
       maxlength: 100,
     },
@@ -25,12 +26,6 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      validate: {
-        validator: function (value){
-          return value.length > 0
-        }, 
-        message: "Category cannot be empty or just spaces"
-      }
     },
   },
   {
