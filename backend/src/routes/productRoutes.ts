@@ -7,6 +7,7 @@ import {
   updateProduct,
   updateStock,
   deleteProduct,
+  getPublicInventoryStats,
 } from "../controllers/productController";
 import {
   validateCompleteProduct,
@@ -16,6 +17,7 @@ import {
 import { protect, authorize } from "../middleware/authMiddleware";
 const router = express.Router();
 router.get("/", protect, authorize(["Manager", "Employee"]), getProducts);
+router.get("/public-stats", getPublicInventoryStats);
 router.get("/:id", protect, authorize(["Manager", "Employee"]), getProduct);
 router.post(
   "/",

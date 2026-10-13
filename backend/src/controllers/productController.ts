@@ -136,3 +136,67 @@ export async function updateStock(
     next(error);
   }
 }
+export const getPublicInventoryStats = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const [result] = await Product.aggregate([
+      {
+        $facet: {
+          summary: [
+            {
+              $group: {
+                _id: null,
+                totalProducts: { $sum: 1 },
+                totalUnits: { $sum: "$stock" },
+                inventoryValue: {
+                  $sum: { $multiply: ["$price", "$stock"] },
+                },
+              },
+            },
+          ],
+          categories: [
+            {
+              $group: {
+                _id: "$category",
+                count: { $sum: 1 },
+              },
+            },
+            { $sort: { count: -1, _id: 1 } },
+          ],
+        },
+      },
+    ]);
+
+    const summary = result?.summary?.[0] ?? {
+      totalProducts: 0,
+      totalUnits: 0,
+      inventoryValue: 0,
+    };
+
+    const totalProducts = summary.totalProducts;
+
+    const categories = result.categories.map(
+      (category: { _id: string; count: number }) => ({
+        name: category._id,
+        count: category.count,
+        percentage:
+          totalProducts === 0
+            ? 0
+            : Math.round((category.count / totalProducts) * 100),
+      }),
+    );
+
+    return res.status(200).json({
+      totalProducts,
+      totalUnits: summary.totalUnits,
+      inventoryValue: summary.inventoryValue,
+      totalCategories: categories.length,
+      categories,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
